@@ -61,11 +61,7 @@ func getMovies(w http.ResponseWriter, r *http.Request) {
 
 // ================================== Delete One ==================================
 func deleteMovie(w http.ResponseWriter, r *http.Request) {
-	//Step 1 : Call api
-	movies, err := apiCalling()
-	if err != nil {
-		http.Error(w, "Error fetching data", http.StatusInternalServerError)
-	}
+
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	for index, movie := range movies {
@@ -77,75 +73,71 @@ func deleteMovie(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
+	json.NewEncoder(w).Encode(movies)
 }
 
-// // Get One Movie
-// func getMovie(w http.ResponseWriter, r *http.Request) {
-// 	w.Header().Set("Content-Type", "application/json")
-// 	params := mux.Vars(r)
-// 	for _, item := range movies {
-// 		if item.ID == params["id"] {
-// 			fmt.Println("One Movie Found", item)
-// 			json.NewEncoder(w).Encode(item)
-// 			return
-// 		}
-// 	}
-// 	json.NewEncoder(w).Encode(movies)
-// }
+// ======================== Get One ========================
+func getMovie(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	params := mux.Vars(r)
+	for _, movie := range movies {
+		if movie.ImdbID == params["id"] {
+			fmt.Println("One Movie Found", movie)
+			json.NewEncoder(w).Encode(movie)
+			return
+		}
+	}
+}
 
-// // Create Movie
+//======================== Create Movie ===================
 
-// func createMovie(w http.ResponseWriter, r *http.Request) {
-// 	w.Header().Set("Content-Type", "application/json")
-// 	// Create a new movie instance to be send as body to postman
-// 	var movie Movie
-// 	// Decod ethe new movie
-// 	_ = json.NewDecoder(r.Body).Decode(&movie)
-// 	// create a id for the movie and convert it to string to be used later
-// 	movie.ID = strconv.Itoa(rand.Intn(100000000))
-// 	movies = append(movies, movie)
-// 	fmt.Println("New Movie added", movie)
-// 	// return the new movie created
-// 	json.NewEncoder(w).Encode(movie)
-// }
+func createMovie(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	// Create a new movie instance to be send as body to postman
+	var movie Movie
+	// Decode the new movie
+	_ = json.NewDecoder(r.Body).Decode(&movie)
+	movies = append(movies, movie)
+	fmt.Println("New Movie added", movie)
+	// return the new movie created
+	json.NewEncoder(w).Encode(movie)
+}
 
-// // Update Movie
-// func updateMovie(w http.ResponseWriter, r *http.Request) {
+// ====================== Update Movie ===================
+func updateMovie(w http.ResponseWriter, r *http.Request) {
 
-// 	// set json content type
-// 	w.Header().Set("Content-Type", "application/json")
-// 	// params
-// 	params := mux.Vars(r)
-// 	// loop over movies
+	// set json content type
+	w.Header().Set("Content-Type", "application/json")
+	// params
+	params := mux.Vars(r)
+	// loop over movies
 
-// 	// delete the movie with the id that we have send
-// 	// add a new movie - which is the movie we've send via postman
-// 	for index, item := range movies {
-// 		//Step 1 : find and delete the old movie
-// 		if item.ID == params["id"] {
-// 			movies = append(movies[:index], movies[index+1:]...)
-// 			// Step 2:  Now create new movie
-// 			var movie Movie
-// 			_ = json.NewDecoder(r.Body).Decode(&movie)
-// 			movie.ID = params["id"]
-// 			movies = append(movies, movie)
-// 			json.NewEncoder(w).Encode(movie)
-// 			return
-// 		}
+	// delete the movie with the id that we have send
+	// add a new movie - which is the movie we've send via postman
+	for index, item := range movies {
+		//Step 1 : find and delete the old movie
+		if item.ImdbID == params["id"] {
+			movies = append(movies[:index], movies[index+1:]...)
+			// Step 2:  Now create new movie
+			var movie Movie
+			_ = json.NewDecoder(r.Body).Decode(&movie)
+			movie.ImdbID = params["id"]
+			movies = append(movies, movie)
+			json.NewEncoder(w).Encode(movie)
+			return
+		}
 
-// 	}
-// }
+	}
+}
 
 func main() {
 	// create a new router
 	r := mux.NewRouter()
 
-	// Seed data
-
 	r.HandleFunc("/movies", getMovies).Methods("GET")
-	// r.HandleFunc("/movies/{id}", getMovie).Methods("GET")
-	// r.HandleFunc("/movies", createMovie).Methods("POST")
-	// r.HandleFunc("/movies/{id}", updateMovie).Methods("PUT")
+	r.HandleFunc("/movies/{id}", getMovie).Methods("GET")
+	r.HandleFunc("/movies", createMovie).Methods("POST")
+	r.HandleFunc("/movies/{id}", updateMovie).Methods("PUT")
 	r.HandleFunc("/movies/{id}", deleteMovie).Methods("DELETE")
 
 	fmt.Println("Starting Server at PORT 8000")
